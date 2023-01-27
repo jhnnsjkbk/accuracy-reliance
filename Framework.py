@@ -2,9 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import tkinter as tk
+import math
 
 def center_window(master, width=460, height=160):
-    """Center a window that calls this method."""
+    """
+    This function centers a window (that calls this method) on the screen.
+
+    Args:
+    master (tk.Tk): The master tkinter object of the window to center.
+    width (int): The width of the window. Default is 460.
+    height (int): The height of the window. Default is 160.
+
+    Returns:
+    None
+    """
     # get screen width and height
     screen_width = master.winfo_screenwidth()
     screen_height = master.winfo_screenheight()
@@ -15,8 +26,17 @@ def center_window(master, width=460, height=160):
     master.geometry('%dx%d+%d+%d' % (width, height, x, y))
 
 class ValueInput:
-    """Structure the input window"""
+    """
+    Structure the input window for AI, System accuracy and Adherence.
+    It creates a LabelFrame widget with three Labels for AI accuracy, System accuracy, and Adherence and also creates three Entry widgets for inputting the values.
+    It also creates three buttons for inputting the values, displaying the framework and displaying detailed adherence.
+    """
     def __init__(self, master):
+        """
+        Initializes the LabelFrame, Labels, Entry widgets and Buttons.
+        Args:
+        master: master frame to which the widgets are added.
+        """
         self.master = master
         self.frame = tk.LabelFrame(self.master, text="Submit Values")
 
@@ -62,16 +82,25 @@ class ValueInput:
         center_window(master)
 
     def display_framework(self):
-        """Open new window with pyplot by calling DisplayFramework"""
+        """
+        Open new window with pyplot by calling DisplayFramework
+        """
         self.app = DisplayFramework(None)
 
     def display_detailedAdherence(self):
-        """Open new window to and call DisplayDetailedAdherence constructor"""
+        """
+        Open new window and call DisplayDetailedAdherence constructor
+        """
         self.DetailWindow = tk.Toplevel(self.master)
         self.app = DisplayDetailedAdherence(self.DetailWindow)
 
     def all_values_given(self):
-        """Returns 0/1/2 depending on how many input values a user has submitted"""
+        """
+        Determines the number of input values submitted by the user.
+
+        Returns:
+        int: 0 if no AI accuracy value is given, 1 if AI accuracy value is given but no other values are given, 2 if all values are given.
+        """
         global ai_accuracy
         global sys_accuracy
         global adherence
@@ -87,7 +116,11 @@ class ValueInput:
         return 2 #display framework and also detailed reliance information
 
     def input_values(self):
-        """Input AI accuracy, and optionally System accuracy and Reliance"""
+        """
+        This function inputs the AI accuracy, system accuracy, and adherence values from the GUI.
+        It converts the values to a decimal form by dividing by 100.
+        It also calls the display_values function to update the GUI with the inputted values.
+        """
         global ai_accuracy
         global sys_accuracy
         global adherence
@@ -106,7 +139,11 @@ class ValueInput:
         self.display_values()
     
     def display_values(self):
-        """Display selected values in the GUI"""
+        """
+        This function displays the selected values in the GUI. It creates a label widget, configures its font and 
+        grid layout, and sets the text to display. If no AI accuracy value has been submitted yet, a message 
+        indicating this is displayed. Otherwise, the chosen AI accuracy is displayed as a percentage.
+        """
         self.lbl_display_acc = tk.Label(master=self.frame)
         self.lbl_display_acc.config(font=("Consolas",10), text="") #override previous text -> not working
         self.lbl_display_acc.grid(column=0, row=4, columnspan = 4)
@@ -118,8 +155,20 @@ class ValueInput:
         self.lbl_display_acc.config(text=selected_accuracy_text)
 
 class DisplayFramework:
-    """Structure the Framework window"""
+    """
+    The DisplayFramework class is responsible for generating and displaying the graphical representation of the 
+    AI accuracy and adherence relationship.
+
+    Attributes:
+    master (Tk): Tkinter master window object
+    """
     def __init__(self, master):
+        """
+        Initializes the class and generates the framework graph using matplotlib.
+        It takes in the AI accuracy and adherence values, and displays the best, worst, and average cases 
+        for the system accuracy.
+        Additionally, it also displays the minimum adherence required for the AI accuracy.
+        """
         #if ai_accuracy is not submitted, display framework with 0% AI Accuracy
         global ai_accuracy #included because otherwise code has an error in the for loop below
         if ValueInput.all_values_given(self) == 0:
@@ -186,47 +235,61 @@ class DisplayFramework:
         plt.show()
 
 class DisplayDetailedAdherence:
-    """Structure the DetailedAdherence window"""
+    """
+    This class is used to structure the DetailedAdherence window in a tkinter GUI application. 
+    The class displays an adherence matrix and the ADAA (Ability to Discriminate between Right and Wrong AI Advice) value.
+    """
     def __init__(self, master):
+        """
+        Initializes a new frame with the given master and packs it. Assigns values to variables ca, wa, do, co and 
+        creates labels with these values to put them in the adherence matrix and calculate the ADAA.
+        """
         self.master = master
         ### initialize a new frame
-        self.frame_dA = tk.LabelFrame(self.master, text="Adherence Details")
-        self.frame_dA.pack()
+        self.frame_matrix = tk.LabelFrame(self.master, text="Adherence Matrix")
+        self.frame_matrix.pack()
+        self.frame_adaa = tk.LabelFrame(self.master, text="ADAA")
+        self.frame_adaa.pack()
 
         # assign values to x_1, ...
         solution_array = self.solve_LSE()
-        x_1 = round(solution_array[0], 2)
-        x_2 = round(solution_array[1], 2)
-        x_3 = round(solution_array[2], 2)
-        x_4 = round(solution_array[3], 2)
+        ca = round(solution_array[0], 2)
+        wa = round(solution_array[1], 2)
+        do = round(solution_array[2], 2)
+        co = round(solution_array[3], 2)
 
-        x_1_text = "Correct Adherence: " + str(x_1) + "%"
-        x_2_text = "Wrong Adherence: " + str(x_2) + "%"
-        x_3_text = "Detrimental Override: " + str(x_3) + "%"
-        x_4_text = "Corrective Override: " + str(x_4) + "%"
+        ca_text = "Correct Adherence: " + str(ca) + "%"
+        wa_text = "Wrong Adherence: " + str(wa) + "%"
+        do_text = "Detrimental Override: " + str(do) + "%"
+        co_text = "Corrective Override: " + str(co) + "%"
 
         # fill in the matrix with values
-        self.lbl_x_1 = tk.Label(self.frame_dA, text=x_1_text)
-        self.lbl_x_2 = tk.Label(self.frame_dA, text=x_2_text)
-        self.lbl_x_3 = tk.Label(self.frame_dA, text=x_3_text)
-        self.lbl_x_4 = tk.Label(self.frame_dA, text=x_4_text)
-        self.lbl_AI = tk.Label(self.frame_dA, text="AI Recommendation")
-        self.lbl_AI_correct = tk.Label(self.frame_dA, text="Correct")
-        self.lbl_AI_wrong = tk.Label(self.frame_dA, text="Wrong")
-        self.lbl_human = tk.Label(self.frame_dA, text="Human action")
-        self.lbl_human_adhere = tk.Label(self.frame_dA, text="Adhere")
-        self.lbl_human_override = tk.Label(self.frame_dA, text="Override")
+        self.lbl_ca = tk.Label(self.frame_matrix, text=ca_text)
+        self.lbl_wa = tk.Label(self.frame_matrix, text=wa_text)
+        self.lbl_do = tk.Label(self.frame_matrix, text=do_text)
+        self.lbl_co = tk.Label(self.frame_matrix, text=co_text)
+        self.lbl_AI = tk.Label(self.frame_matrix, text="AI Recommendation")
+        self.lbl_AI_correct = tk.Label(self.frame_matrix, text="Correct")
+        self.lbl_AI_wrong = tk.Label(self.frame_matrix, text="Wrong")
+        self.lbl_human = tk.Label(self.frame_matrix, text="Human action")
+        self.lbl_human_adhere = tk.Label(self.frame_matrix, text="Adhere")
+        self.lbl_human_override = tk.Label(self.frame_matrix, text="Override")
         
-        self.lbl_x_1.grid(column=2, row=2, sticky="W")
-        self.lbl_x_2.grid(column=3, row=2, sticky="W")
-        self.lbl_x_3.grid(column=2, row=3, sticky="W")
-        self.lbl_x_4.grid(column=3, row=3, sticky="W")
+        self.lbl_ca.grid(column=2, row=2, sticky="W")
+        self.lbl_wa.grid(column=3, row=2, sticky="W")
+        self.lbl_do.grid(column=2, row=3, sticky="W")
+        self.lbl_co.grid(column=3, row=3, sticky="W")
         self.lbl_AI.grid(column=2, row=0, columnspan=2, sticky="W"+"E")
         self.lbl_AI_correct.grid(column=2, row=1)
         self.lbl_AI_wrong.grid(column=3, row=1)
         self.lbl_human.grid(column=0, row=2, rowspan=2, sticky="W"+"E")
         self.lbl_human_adhere.grid(column=1, row=2)
         self.lbl_human_override.grid(column=1, row=3)
+
+        # display adaa
+        adaa = self.solve_adaa(ca, wa, do, co)
+        self.lbl_adaa = tk.Label(self.frame_adaa, text = ("The ability to discriminate between right and wrong AI advice (ADAA) is: " + str(adaa)))
+        self.lbl_adaa.grid(column=0, columnspan=4, row=5, sticky="ew")
 
         """
         # create lines for the matrix
@@ -236,12 +299,20 @@ class DisplayDetailedAdherence:
         """
 
     def solve_LSE(self):
-        """Accesses the golobal variables AI accuracy, System Accuracy and Reliance to calculate Correct Adherence, 
-        Wrong Adherence, Detrimental Override, Correct Override"""
+        """
+        Calculates the values of Correct Adherence, Wrong Adherence, Detrimental Override, and Correct Override based on 
+        Observed System Accuracy, Observed Adherence to AI Recommendations, and AI Accuracy.
+
+        The function uses a matrix equation to solve for the values of the four variables, which are stored as global variables.
+
+        Returns:
+        numpy.ndarray: The values of Correct Adherence, Wrong Adherence, Detrimental Override, and Correct Override.
+
+        """
         # x_1 = Correct Adherence
         # x_2 = Wrong Adherence
         # x_3 = Detrimental Override
-        # x_4 = Correct Override
+        # x_4 = Corrective Override
 
         # x_1+x_4=Observed System Accuracy
         # x_1+x_2=Observed Adherence to AI Rec.
@@ -253,7 +324,22 @@ class DisplayDetailedAdherence:
         right_side = np.array([sys_accuracy, adherence, ai_accuracy, 1])
 
         return np.linalg.solve(left_side, right_side)
+    
+    def solve_adaa(self, ca:float, wa:float, do:float, co:float):
+        """Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
 
+        Args:
+        ca (float): Correct Adherence to AI recommendation as % value of total human decisions
+        wa (float): Wrong Adherence to AI recommendation as % value of total human decisions
+        do (float): Detrimental Override of AI recommendation as % value of total human decisions
+        co (float): Corrective Override of AI recommendation as % value of total human decisions
+
+        Returns:
+        float: The ADAA value rounded to 6 decimal places.
+        """ 
+        adaa = round((ca*co - do*wa)/math.sqrt((ca+do)*(ca+wa)*(co+do)*(co+wa)), 6)
+        return(adaa)
+        
 def main(): 
     root = tk.Tk()
     root.title("Accuracy-Adherence-Framework")
