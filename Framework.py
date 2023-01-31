@@ -329,20 +329,14 @@ class DisplayDetailedAdherence:
         """
         Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
 
-        Args:
-        ca (float): Correct Adherence to AI recommendation as % value of total human decisions
-        wa (float): Wrong Adherence to AI recommendation as % value of total human decisions
-        do (float): Detrimental Override of AI recommendation as % value of total human decisions
-        co (float): Corrective Override of AI recommendation as % value of total human decisions
-
         Returns:
-        float: The ADAA value rounded to 6 decimal places.
+        float: The ADAA value rounded to 2 decimal places.
         """
         global ai_accuracy, adherence, sys_accuracy
-        # best case
-        if adherence == 0 or adherence ==  1:
+        if adherence == 0 or adherence ==  1: #otherwise division by zero
             adaa = 0
         else:
+            # best case
             if (1-ai_accuracy+adherence)>=1: #accuracy at least as high as reliance
                 sys_acc_best = 1-adherence+ai_accuracy #e.g. acc 80%, reliance 80%: 1-0.8+0.8 = 100%
             else: #accuracy lower than reliance
