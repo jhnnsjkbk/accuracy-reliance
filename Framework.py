@@ -287,7 +287,7 @@ class DisplayDetailedAdherence:
         self.lbl_human_override.grid(column=1, row=3)
 
         # display adaa
-        adaa = self.solve_adaa(ca, wa, do, co)
+        adaa = self.solve_adaa()
         self.lbl_adaa = tk.Label(self.frame_adaa, text = ("The ability to discriminate between right and wrong AI advice (ADAA) is: " + str(adaa)))
         self.lbl_adaa.grid(column=0, columnspan=4, row=5, sticky="ew")
 
@@ -325,8 +325,9 @@ class DisplayDetailedAdherence:
 
         return np.linalg.solve(left_side, right_side)
     
-    def solve_adaa(self, ca:float, wa:float, do:float, co:float):
-        """Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
+    def solve_adaa(self):
+        """
+        Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
 
         Args:
         ca (float): Correct Adherence to AI recommendation as % value of total human decisions
@@ -336,13 +337,30 @@ class DisplayDetailedAdherence:
 
         Returns:
         float: The ADAA value rounded to 6 decimal places.
-        """ 
-        adaa = round((ca*co - do*wa)/math.sqrt((ca+do)*(ca+wa)*(co+do)*(co+wa)), 6)
+        """
+        global ai_accuracy, adherence, sys_accuracy
+        # best case
+        if adherence == 0 or adherence ==  1:
+            adaa = 0
+        else:
+            if (1-ai_accuracy+adherence)>=1: #accuracy at least as high as reliance
+                sys_acc_best = 1-adherence+ai_accuracy #e.g. acc 80%, reliance 80%: 1-0.8+0.8 = 100%
+            else: #accuracy lower than reliance
+                sys_acc_best = 1-ai_accuracy+adherence
+
+            # worst case
+            if (1-ai_accuracy-adherence)<0: #accuracy + reliance higher than 100%
+                sys_acc_worst = ai_accuracy+adherence-1 #e.g. acc 80%, reliance 80%: 60%
+            else:
+                sys_acc_worst = 1-ai_accuracy-adherence #e.g. acc 80%, reliance 10%: 10%
+
+            # adaa
+            adaa = round(((sys_accuracy - sys_acc_worst)/(sys_acc_best - sys_acc_worst)) * math.pow(sys_acc_best, 3), 2)
         return(adaa)
-        
+
 def main(): 
     root = tk.Tk()
-    root.title("Accuracy-Adherence-Framework")
+    root.title("Accuracy-Adherence Framework")
     app = ValueInput(root)
     root.mainloop()
 
