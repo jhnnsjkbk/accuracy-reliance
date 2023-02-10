@@ -58,7 +58,7 @@ class ValueInput:
 
         self.btn_input_values = tk.Button(master=self.frame, text="Input Values", command=self.input_values)
         self.btn_display_fw = tk.Button(master=self.frame, text="Display Framework", command=self.display_framework)
-        self.btn_display_details = tk.Button(master=self.frame, text="Display Details", command=self.display_detailedAdherence)
+        self.btn_display_details = tk.Button(master=self.frame, text="Display Details", command=self.display_detailedInformation)
 
         self.ent_ai_accuracy = tk.Entry(master=self.frame, width=10)
         self.ent_sys_accuracy = tk.Entry(master=self.frame, width=10)
@@ -87,12 +87,12 @@ class ValueInput:
         """
         self.app = DisplayFramework(None)
 
-    def display_detailedAdherence(self):
+    def display_detailedInformation(self):
         """
-        Open new window and call DisplayDetailedAdherence constructor
+        Open new window and call DisplayDetailedInformation constructor
         """
         self.DetailWindow = tk.Toplevel(self.master)
-        self.app = DisplayDetailedAdherence(self.DetailWindow)
+        self.app = DisplayDetailedInformation(self.DetailWindow)
 
     def all_values_given(self):
         """
@@ -127,12 +127,12 @@ class ValueInput:
 
         # can't work with all_values_given Function, because then we couldn't set the values
         try:
-            ai_accuracy = int(self.ent_ai_accuracy.get())/100
+            ai_accuracy = float(self.ent_ai_accuracy.get())/100
         except ValueError:
             pass
         try:
-            sys_accuracy = int(self.ent_sys_accuracy.get())/100
-            adherence = int(self.ent_adherence.get())/100
+            sys_accuracy = float(self.ent_sys_accuracy.get())/100
+            adherence = float(self.ent_adherence.get())/100
         except ValueError:
             pass
 
@@ -234,29 +234,44 @@ class DisplayFramework:
         plt.ylabel("Possible System Accuracy A(a)", fontsize=15)
         plt.show()
 
-class DisplayDetailedAdherence:
+class DisplayDetailedInformation:
     """
-    This class is used to structure the DetailedAdherence window in a tkinter GUI application. 
+    This class is used to structure the DetailedInformation window in a tkinter GUI application. 
     The class displays an adherence matrix and the ADAA (Ability to Discriminate between Right and Wrong AI Advice) value.
     """
     def __init__(self, master):
         """
-        Initializes a new frame with the given master and packs it. Assigns values to variables ca, wa, do, co and 
+        Initializes frames with the given master and packs them. Assigns values to variables ca, wa, do, co and 
         creates labels with these values to put them in the adherence matrix and calculate the ADAA.
         """
         self.master = master
-        ### initialize a new frame
-        self.frame_matrix = tk.LabelFrame(self.master, text="Adherence Matrix")
-        self.frame_matrix.pack()
-        self.frame_adaa = tk.LabelFrame(self.master, text="ADAA")
-        self.frame_adaa.pack()
 
+        ### initialize frames
+        self.frame_interval = tk.LabelFrame(self.master, text="Interval of possible System Accuracy")
+        self.frame_interval.grid(column=0, row=0, pady=10, padx=5)
+        self.frame_matrix = tk.LabelFrame(self.master, text="Adherence Matrix (values only valid for binary decision cases)")
+        self.frame_matrix.grid(column=0, row=1, pady=10, padx=5)
+        self.frame_adaa = tk.LabelFrame(self.master, text="ADAA (value only valid for binary decision cases)")
+        self.frame_adaa.grid(column=0, row=2, pady=10, padx=5)
+
+        ### display Interval of possible System Accuracy
+        sysAccuracyWorstCase = self.return_sysAccuracyWorstCase()
+        sysAccuracyBestCase = self.return_sysAccuracyBestCase()
+        sysAccuracyWorstCase_text = "The minimum potential System Accuracy is: "
+        sysAccuracyBestCase_text = "The maximum potential System Accuracy is: "
+
+        self.lbl_minSysAcc = tk.Label(self.frame_interval, text = (sysAccuracyWorstCase_text+str(sysAccuracyWorstCase))+"%.")
+        self.lbl_maxSysAcc = tk.Label(self.frame_interval, text = (sysAccuracyBestCase_text+str(sysAccuracyBestCase))+"%.")
+        self.lbl_minSysAcc.grid(column=0, row=0)
+        self.lbl_maxSysAcc.grid(column=1, row=0)
+
+        ### display adherence matrix
         # assign values to x_1, ...
         solution_array = self.solve_LSE()
-        ca = round(solution_array[0], 2)
-        wa = round(solution_array[1], 2)
-        do = round(solution_array[2], 2)
-        co = round(solution_array[3], 2)
+        ca = round(solution_array[0], 2) * 100
+        wa = round(solution_array[1], 2) * 100
+        do = round(solution_array[2], 2) * 100
+        co = round(solution_array[3], 2) * 100
 
         ca_text = "Correct Adherence: " + str(ca) + "%"
         wa_text = "Wrong Adherence: " + str(wa) + "%"
@@ -286,9 +301,10 @@ class DisplayDetailedAdherence:
         self.lbl_human_adhere.grid(column=1, row=2)
         self.lbl_human_override.grid(column=1, row=3)
 
-        # display adaa
-        adaa = self.solve_adaa(ca, wa, do, co)
-        self.lbl_adaa = tk.Label(self.frame_adaa, text = ("The ability to discriminate between right and wrong AI advice (ADAA) is: " + str(adaa)))
+        ### display adaa
+        adaa = self.solve_adaa()
+        adaa_text = "The ability to discriminate between right and wrong AI advice (ADAA) given your reliance level is: "
+        self.lbl_adaa = tk.Label(self.frame_adaa, text = (adaa_text + str(adaa)))
         self.lbl_adaa.grid(column=0, columnspan=4, row=5, sticky="ew")
 
         """
@@ -307,12 +323,11 @@ class DisplayDetailedAdherence:
 
         Returns:
         numpy.ndarray: The values of Correct Adherence, Wrong Adherence, Detrimental Override, and Correct Override.
-
         """
-        # x_1 = Correct Adherence
-        # x_2 = Wrong Adherence
-        # x_3 = Detrimental Override
-        # x_4 = Corrective Override
+        # x_1=Correct Adherence
+        # x_2=Wrong Adherence
+        # x_3=Detrimental Override
+        # x_4=Corrective Override
 
         # x_1+x_4=Observed System Accuracy
         # x_1+x_2=Observed Adherence to AI Rec.
@@ -325,24 +340,50 @@ class DisplayDetailedAdherence:
 
         return np.linalg.solve(left_side, right_side)
     
-    def solve_adaa(self, ca:float, wa:float, do:float, co:float):
-        """Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
-
-        Args:
-        ca (float): Correct Adherence to AI recommendation as % value of total human decisions
-        wa (float): Wrong Adherence to AI recommendation as % value of total human decisions
-        do (float): Detrimental Override of AI recommendation as % value of total human decisions
-        co (float): Corrective Override of AI recommendation as % value of total human decisions
+    def solve_adaa(self):
+        """
+        Solve and return the KPI 'Ability to discriminate between right and wrong AI Advice (ADAA)'
 
         Returns:
-        float: The ADAA value rounded to 6 decimal places.
-        """ 
-        adaa = round((ca*co - do*wa)/math.sqrt((ca+do)*(ca+wa)*(co+do)*(co+wa)), 6)
+        float: The ADAA value rounded to 2 decimal places.
+        """
+        global ai_accuracy, adherence, sys_accuracy
+        if adherence == 0 or adherence ==  1: #otherwise division by zero
+            adaa = 0
+        else:
+            # best case
+            if (1-ai_accuracy+adherence)>=1: #accuracy at least as high as reliance
+                sys_acc_best = 1-adherence+ai_accuracy #e.g. acc 80%, reliance 80%: 1-0.8+0.8 = 100%
+            else: #accuracy lower than reliance
+                sys_acc_best = 1-ai_accuracy+adherence
+
+            # worst case
+            if (1-ai_accuracy-adherence)<0: #accuracy + reliance higher than 100%
+                sys_acc_worst = ai_accuracy+adherence-1 #e.g. acc 80%, reliance 80%: 60%
+            else:
+                sys_acc_worst = 1-ai_accuracy-adherence #e.g. acc 80%, reliance 10%: 10%
+
+            # adaa
+            adaa = round(((sys_accuracy - sys_acc_worst)/(sys_acc_best - sys_acc_worst)), 2)
         return(adaa)
-        
+
+    def return_sysAccuracyBestCase(self):
+        if (1-ai_accuracy+adherence)>=1: #accuracy at least as high as reliance
+            sys_acc_best = 1-adherence+ai_accuracy #e.g. acc 80%, reliance 80%: 1-0.8+0.8 = 100%
+        else: #accuracy lower than reliance
+            sys_acc_best = 1-ai_accuracy+adherence
+        return(round(sys_acc_best*100, 2))
+
+    def return_sysAccuracyWorstCase(self):
+        if (1-ai_accuracy-adherence)<0: #accuracy + reliance higher than 100%
+            sys_acc_worst = ai_accuracy+adherence-1 #e.g. acc 80%, reliance 80%: 60%
+        else:
+            sys_acc_worst = 1-ai_accuracy-adherence #e.g. acc 80%, reliance 10%: 10%
+        return(round(sys_acc_worst*100, 2))
+
 def main(): 
     root = tk.Tk()
-    root.title("Accuracy-Adherence-Framework")
+    root.title("Accuracy-Adherence Framework")
     app = ValueInput(root)
     root.mainloop()
 
