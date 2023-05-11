@@ -266,7 +266,7 @@ class DisplayFramework:
             ai_accuracy = 0
 
         ### fill list with x and y values
-        x = np.linspace(0, 1, 10001) #reliance from 0-100% in 1% steps
+        x = np.linspace(0, 1, 10001) #reliance from 0-100% in 0.01% steps
         y = [] #accuracy upper border 
         y_neg = [] #accuracy lower border
 
@@ -299,8 +299,8 @@ class DisplayFramework:
             if human_accuracy > ai_accuracy:
                 for reliance_value in x:
                     if reliance_value<=ai_accuracy: #reliance lower than or equal to ai_accuracy, best case line rising
-                        dumb_value = round(1-ai_accuracy+reliance_value, 4)
-                        if human_accuracy == dumb_value:
+                        best_case_value = round(1-ai_accuracy+reliance_value, 4)
+                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-4):
                             min_rel = round(100*reliance_value, 2)
             else:
                 min_rel = round(100 * max(1-(2*(1-ai_accuracy)),0), 2)
@@ -312,7 +312,8 @@ class DisplayFramework:
             if human_accuracy > ai_accuracy:
                 for reliance_value in x:
                     if reliance_value>ai_accuracy: #reliance higher than ai_accuracy, best case line is falling
-                        if human_accuracy == round(1-reliance_value+ai_accuracy, 4):
+                        best_case_value = round(1-reliance_value+ai_accuracy, 4)
+                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-4):
                             max_rel = round(100*reliance_value,2)
 
         ###generate a list of AI accuracy values (e.g. 80%) to display it in the graph
@@ -342,7 +343,7 @@ class DisplayFramework:
         ## draw all the lines and point into the graph
         ax.plot(x, y, "green", label="Best Case")
         ax.plot(x, y_neg, "red", label="Worst Case")
-        ax.plot(x, random, "k", label="Random Case")
+        #ax.plot(x, random, "k", label="Random Case")
         ax.plot(x, ai_accuracy_list, "dimgrey", linestyle='dotted', label="AI Accuracy")
         human_acc_legend = round(100*human_accuracy, 2) #human acc has to be rounded to be displayed in legend
 
