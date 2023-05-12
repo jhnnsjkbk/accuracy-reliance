@@ -299,8 +299,8 @@ class DisplayFramework:
             if human_accuracy > ai_accuracy:
                 for reliance_value in x:
                     if reliance_value<=ai_accuracy: #reliance lower than or equal to ai_accuracy, best case line rising
-                        best_case_value = round(1-ai_accuracy+reliance_value, 4)
-                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-4):
+                        best_case_value = round(1-ai_accuracy+reliance_value, 5)
+                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-5):
                             min_rel = round(100*reliance_value, 2)
             else:
                 min_rel = round(100 * max(1-(2*(1-ai_accuracy)),0), 2)
@@ -312,8 +312,8 @@ class DisplayFramework:
             if human_accuracy > ai_accuracy:
                 for reliance_value in x:
                     if reliance_value>ai_accuracy: #reliance higher than ai_accuracy, best case line is falling
-                        best_case_value = round(1-reliance_value+ai_accuracy, 4)
-                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-4):
+                        best_case_value = round(1-reliance_value+ai_accuracy, 5)
+                        if math.isclose(human_accuracy, best_case_value, abs_tol=10**-5):
                             max_rel = round(100*reliance_value,2)
 
         ###generate a list of AI accuracy values (e.g. 80%) to display it in the graph
@@ -343,16 +343,17 @@ class DisplayFramework:
         ## draw all the lines and point into the graph
         ax.plot(x, y, "green", label="Best Case")
         ax.plot(x, y_neg, "red", label="Worst Case")
-        #ax.plot(x, random, "k", label="Random Case")
+        ax.plot(x, random, "k", label="Random Case")
         ax.plot(x, ai_accuracy_list, "dimgrey", linestyle='dotted', label="AI Accuracy")
-        human_acc_legend = round(100*human_accuracy, 2) #human acc has to be rounded to be displayed in legend
 
         # all_values_given=1: only human acc not given, 2: only ai and human acc given, 3: only ai acc given, 4: all given
         if ValueInput.all_values_given(self) == 1:
             ax.plot(reliance, sys_accuracy, marker="o", markersize=7, markeredgecolor="black", markerfacecolor="black")
         if ValueInput.all_values_given(self) == 2:
+            human_acc_legend = round(100*human_accuracy, 2)
             ax.plot(x, human_accuracy_list, "darkgrey", linestyle='dashdot', label="Human Accuracy: "+str(human_acc_legend)+"%")
         if ValueInput.all_values_given(self) == 4:
+            human_acc_legend = round(100*human_accuracy, 2)
             ax.plot(reliance, sys_accuracy, marker="o", markersize=7, markeredgecolor="black", markerfacecolor="black")
             ax.plot(x, human_accuracy_list, "darkgrey", linestyle='dashdot', label="Human Accuracy: "+str(human_acc_legend)+"%")
         if ai_accuracy >= 0.5: #minimum reliance only exists for an accuracy >= 50%
@@ -379,9 +380,10 @@ class DisplayFramework:
         ax.set_ylabel("Possible System Accuracy Aₛᵧₛ(r)", fontsize=15)
         try:
             max_rel is None
-            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.07), fancybox=True, shadow=True, ncol=4, fontsize = 8)
+            min_rel is None
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.07), fancybox=True, shadow=True, ncol=3, fontsize = 10)
         except UnboundLocalError:
-            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.07), fancybox=True, shadow=True, ncol=6, fontsize = 8)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.07), fancybox=True, shadow=True, ncol=4, fontsize = 10)
         plt.tight_layout()
         plt.show()
 
@@ -619,7 +621,7 @@ class DisplayDetailedInformation:
         #probability to reach or exceed this point
         prob_to_reach_sys_accuracy_rdm = 0
         sys_accuracy_adapt_array = []
-        sys_accuracy_adapt_array = np.arange(sysAccuracyWorstCase,sys_accuracy_adapt+2, 2)
+        sys_accuracy_adapt_array = np.arange(int(sysAccuracyWorstCase+0.5),sys_accuracy_adapt+2, 2)
 
         for sys_acc_adapt in sys_accuracy_adapt_array:
             x_lower = int((sys_acc_adapt+ai_accuracy_adapt+reliance_adapt-100)/2)
